@@ -1,12 +1,10 @@
 # HW1_APD
 
-Map-Reduce problem solved using Multithreading.
-
 ## Implementation
 
-The main idea of the solution consists of creating a vector of dictionaries by the Mapper execution threads, which links the exponent to its set of perfect powers, the main purpose being for the Reducer execution threads to use this vector.
+The main idea of the solution consists of creating a vector of dictionaries by the Mapper execution threads, which links the exponent to its set of perfect powers. The main purpose is for the Reducer execution threads to use this vector.
 
-Mathematical formalization:
+### Mathematical Formalization
 
 ```
 Let the vector of dictionaries be vector<unordered_map<int, unordered_set<int>>> vecMap.
@@ -15,31 +13,42 @@ Let a pair from elemMap be A = (x, y), where x represents an integer and y a set
 Then y = { n in N* | there exists a k in Z such that n ^ (1 / x) = k }.
 ```
 
-Obviously, the length of this vecMap vector is equal to the number of Mapper threads since each Mapper will populate vecMap with its own processing, namely a dictionary.
+The length of this `vecMap` vector is equal to the number of Mapper threads since each Mapper will populate `vecMap` with its own processing, namely a dictionary.
 
-A vector of strings is also used to more easily manipulate the test files from test.txt.
+### Key Components
 
-To respect the restriction from the assignment requirement, a single for loop was used to launch all Mapper and Reducer execution threads.
+1. A vector of strings is used to easily manipulate the test files from `test.txt`.
+2. A single for loop launches all Mapper and Reducer execution threads to respect the assignment restriction.
+3. The algorithm for checking if a number is a perfect power uses the Newton-Raphson method.
+4. A small algorithm based on the binary representation of the exponent is used to accelerate power raising.
+5. Verification uses a deviation (error) to obtain correct and optimal results.
 
-The algorithm that checks if a number is a perfect power uses a numerical method, namely the Newton-Raphson method. Moreover, to increase the acceleration of raising to power, a small algorithm is used that is based on the binary representation of the exponent passed as an argument. Of course, the verification uses a deviation (error) to obtain correct and optimal results.
+### Thread Synchronization
 
-After all these operations, the Mapper thread will populate its own dictionary with the corresponding values necessary further in the program.
+- A mutex ensures only one thread accesses a file from the vector of files at a time.
+- A barrier at the end of the `funcMapper` function waits for all Mapper threads.
+- Mapper threads increment a shared semaphore counter to 'notify' Reducer threads.
+- Reducer threads use `sem_wait()` and increment the semaphore counter to allow other Reducer threads to work.
 
-Regarding the logic of thread synchronizations, a mutex is used so that only one thread accesses a file from the vector of files at a time, given by reference to the class that models the arguments of a Mapper thread.
+### Reducer Operation
 
-The barrier at the end of the funcMapper function has the role of waiting for all Mapper threads, they will increment the counter of the shared semaphore so as to 'notify' the Reducer threads to start the next stage.
+Each Reducer:
+1. Completes its own `unordered_set<int>` by looking at the exponent stored in each dictionary entry.
+2. Fills its output file with the size of the conceived `unordered_set`.
 
-Each Reducer execution thread will exit the sem_wait() function and will increment, in turn, the semaphore counter in order to allow the other Reducer threads to work / write in the corresponding files.
+### Main Function and Memory Management
 
-Each Reducer completes its own unordered_set<int> by looking at the exponent stored in the key of each entry in the vector of dictionaries and fills in its own output file the size of the unordered_set conceived earlier (unordered_set was chosen as it eliminates duplicates) from the structure.
+- All execution threads are closed respecting their start format.
+- All dynamically allocated memory is rigorously freed.
 
-At the end, in main, all execution threads are closed respecting the format of their start.
+### Bonus Implementation
 
-Also, all dynamically allocated memory is rigorously freed.
+- Templates for classes and methods were introduced.
+- For this assignment, all type variables (T, E) are replaced with the primitive type 'int' in the main function.
+- The `ArgumentMapper` class constructor allows assignment of any implemented algorithm through a method.
 
-For the bonus, an attempt was made to introduce templates for classes and methods. For the specific case of this assignment, all type variables (denoted T, E) are replaced with the primitive type 'int' in the main function. Additionally, the constructor of the ArgumentMapper class allows the assignment of any implemented algorithm through a method (again, for this assignment, the constructLists() method was chosen, which describes the algorithm for finding the Nth root of a given number using nthRoot() and IntPowFast()).
+## References
 
-Some references:
-https://www.codewithc.com/c-program-for-newton-raphson-method/
-https://www.geeksforgeeks.org/find-root-of-a-number-using-newtons-method/
-https://www.geeksforgeeks.org/find-nth-root-of-a-number-using-bisection-method/?ref=rp
+1. [C Program for Newton Raphson Method](https://www.codewithc.com/c-program-for-newton-raphson-method/)
+2. [Find root of a number using Newton's method](https://www.geeksforgeeks.org/find-root-of-a-number-using-newtons-method/)
+3. [Find Nth root of a number using Bisection method](https://www.geeksforgeeks.org/find-nth-root-of-a-number-using-bisection-method/?ref=rp)
